@@ -1,0 +1,283 @@
+<html lang="en">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card d-flex">
+        <div class="row">
+          <div class="col-md-6 mx-auto">
+            <form action="" method="post" id="myForm">
+              {% csrf_token %} Content:<input
+                type="content"
+                class="form-control"
+                id="content"
+              />
+              User:<input type="number" class="form-control" id="userid" />
+              <input type="submit" value="Add" class="btn btn-primary m-2" />
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mx-auto m-2 p-2" id="list-blog"></div>
+      </div>
+
+      <!-- Modal -->
+      <div
+        class="modal fade"
+        id="exampleModal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">Are you sure you want to delete?</div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="saveBtn"
+                data-dismiss="modal"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="exampleModal1"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Update</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form action="" method="POST" id="upForm">
+                {% csrf_token %} Content:<input
+                  type="text"
+                  class="form-control"
+                  id="cont"
+                />
+                User:<input type="number" class="form-control" id="usr" />
+                <button type="submit" class="btn btn-success" id="update">
+                  Update
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          var cookies = document.cookie.split(";");
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+      var csrftoken = getCookie("csrftoken");
+      var chck = false;
+      btn1 = document.querySelector("#saveBtn");
+      btn2 = document.querySelector("#update");
+      const con = document.querySelector("#list-blog");
+      const upform = document.querySelector("#upForm");
+      const myform = document.querySelector("#myForm");
+      myform.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const content = document.querySelector("#content").value;
+        const user = document.querySelector("#userid").value;
+
+        fetch("http://localhost:8000/api/blog-create/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "X-CSRFToken": csrftoken,
+          },
+
+          credentials: "same-origin",
+          body: JSON.stringify({
+            content: content,
+            user: user,
+          }),
+        })
+          .then((response) => {
+            return response.json();
+          })
+          .then((data) => {
+            const dic = document.createElement("div");
+            const bton = document.createElement("button");
+
+            dic.classList = "card m-2 p-2";
+            dic.innerHTML = data.content;
+            bton.classList = "btn btn-danger";
+            bton.innerHTML = "delete";
+            bton.setAttribute("data-toggle", "modal");
+            bton.setAttribute("data-target", "#exampleModal");
+            bton.addEventListener(
+              "click",
+              function () {
+                btn1.addEventListener("click", function () {
+                  dic.remove();
+                  bton.remove();
+                  deleteItem(data);
+                });
+              },
+              false
+            );
+
+            con.append(dic);
+            con.append(bton);
+          });
+      });
+      function confirmfunction() {
+        return true;
+      }
+
+      function displayData() {
+        fetch("http://localhost:8000/api/blog-list/")
+          .then((response) => {
+            return response.json();
+          })
+
+          .then((data) => {
+            for (let i = 0; i < data.length; i++) {
+              const dic = document.createElement("div");
+              const bton = document.createElement("button");
+              const upbton = document.createElement("button");
+              upform.addEventListener("submit", function (e) {
+                e.preventDefault();
+              });
+              dic.classList = "card m-2 p-2";
+              dic.innerHTML = data[i].content;
+              bton.classList = "btn btn-danger ml-2";
+              bton.innerHTML = "delete";
+              bton.setAttribute("data-toggle", "modal");
+              bton.setAttribute("data-target", "#exampleModal");
+              upbton.classList = "btn btn-secondaty ml-2";
+              upbton.innerHTML = "update";
+              upbton.setAttribute("data-toggle", "modal");
+              upbton.setAttribute("data-target", "#exampleModal1");
+              btn2.addEventListener("click", function () {
+                const cont = document.querySelector("#cont").value;
+                const usr = document.querySelector("#usr").value;
+                updateItem(cont, usr, data[i]);
+              });
+
+              bton.addEventListener(
+                "click",
+                function () {
+                  btn1.addEventListener("click", function () {
+                    dic.remove();
+                    bton.remove();
+                    deleteItem(data[i]);
+                  });
+                },
+                false
+              );
+
+              con.append(dic);
+              con.append(bton);
+              con.append(upbton);
+            }
+          });
+      }
+
+      function updateItem(cont, usr, data) {
+        console.log(data.id);
+      }
+
+      function deleteItem(data) {
+        fetch(`http://localhost:8000/api/blog-delete/${data.id}/`, {
+          method: "DELETE",
+          headers: {
+            "Content-type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+        })
+          .then((response) => {
+            return response.json();
+          })
+          .then((data) => {
+            console.log(data);
+          });
+      }
+
+      if (chck == false) {
+        displayData();
+        chck = !chck;
+      }
+    </script>
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
